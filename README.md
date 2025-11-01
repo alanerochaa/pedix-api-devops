@@ -1185,16 +1185,128 @@ O vídeo de apresentação demonstra o funcionamento completo da aplicação Ped
 📺 **Assista aqui:** [Apresentação Pedix API - CodeGirls](https://www.youtube.com/watch?v=Kfnr0p-5UDw)
 🧾 O vídeo mostra o Swagger UI, execução dos endpoints no Postman e o retorno HATEOAS do /home.
 
-
 --- 
+
+🐳 DevOps & Cloud – Deploy na Nuvem (Azure)
+
+Este projeto foi implantado como parte do Checkpoint Final de DevOps Tools & Cloud Computing – FIAP 2025, utilizando máquina virtual na Microsoft Azure e orquestração via Docker Compose.
+
+⚙️ Estrutura dos Containers
+
+O ambiente foi configurado com três containers principais, todos executando em rede interna chamada pedix-network.
+
+
+🧩 Arquivo docker-compose.yml
+
+O arquivo docker-compose.yml define e orquestra todos os serviços.
+Basta copiá-lo para a raiz do projeto e executá-lo para subir o ambiente completo.
+
+| Serviço                    | Container          | Porta Interna | Porta Externa (na VM) | Imagem Base                                |
+| -------------------------- | ------------------ | ------------- | --------------------- | ------------------------------------------ |
+| 🗄️ Banco Oracle XE        | `oracle`           | 1521          | 1521                  | `gvenzl/oracle-xe:21-slim`                 |
+| ☕ Pedix API (Java)         | `pedix-api`        | 8080          | 8080                  | `eclipse-temurin:21-jdk-alpine`            |
+| 💻 Atendimentos API (.NET) | `atendimentos-api` | 8080          | 8081                  | `mcr.microsoft.com/dotnet/aspnet:8.0-slim` |
+
+```
+version: '3.9'
+
+services:
+oracle:
+image: gvenzl/oracle-xe:21-slim
+container_name: oracle
+ports:
+- "1521:1521"
+environment:
+ORACLE_PASSWORD: admin
+ORACLE_ALLOW_REMOTE: true
+volumes:
+- oracle-data:/opt/oracle/oradata
+healthcheck:
+test: ["CMD", "sqlplus", "-L", "system/admin@//localhost:1521/XE", "exit"]
+interval: 30s
+timeout: 10s
+retries: 5
+
+pedix-api:
+build: .
+container_name: pedix-api
+ports:
+- "8080:8080"
+depends_on:
+- oracle
+environment:
+SPRING_DATASOURCE_URL: jdbc:oracle:thin:@oracle:1521/XE
+SPRING_DATASOURCE_USERNAME: system
+SPRING_DATASOURCE_PASSWORD: admin
+networks:
+- pedix-network
+
+atendimentos-api:
+image: duda/atendimentos-api:latest
+container_name: atendimentos-api
+ports:
+- "8081:8080"
+depends_on:
+- oracle
+environment:
+ConnectionStrings__DefaultConnection: "User Id=system;Password=admin;Data Source=oracle:1521/XE;"
+networks:
+- pedix-network
+
+volumes:
+oracle-data:
+
+networks:
+pedix-network:
+driver: bridge
+```
+
+## 🚀 Como Executar na VM (Azure)
+
+1. Conecte-se à sua VM via SSH
+ > ssh azureuser@<ip-da-sua-vm>
+
+
+2. Clone os repositórios
+   * git clone https://github.com/alanerochaa/pedix-api.git
+   * git clone https://github.com/DudaAraujo14/atendimentos-api.git
+
+
+3. Execute o Docker Compose
+> sudo docker-compose up -d --build
+
+4. Verifique se os containers estão ativos 
+> sudo docker ps
+
+## 💻 Acesse os serviços:
+
+* Swagger Pedix: http://<ip-da-vm>:8080/swagger-ui/index.html
+
+* Swagger Atendimentos: http://<ip-da-vm>:8081/swagger/index.html
+
+* Banco Oracle: porta 1521 (acesso remoto opcional)
+
+## 🧾 Evidências (no PDF da entrega)
+
+O PDF anexo à entrega contém as evidências obrigatórias de implantação:
+
+🐋 docker ps mostrando todos os containers em execução
+
+🌐 Swaggers acessíveis via IP público
+
+🗄️ Banco Oracle XE inicializado corretamente
+
+💣 Exclusão do grupo de recursos na Azure (etapa final)
+
 
 ## 👩‍💻 Integrantes e Responsabilidades
 
-| Nome Completo | RM | Função no Projeto | GitHub |
-|----------------|----|------------------|--------|
-| **Alane Rocha da Silva** | RM561052 | Desenvolvimento da API Java (Spring Boot), integração com banco Oracle e documentação | [@alanerochaa](https://github.com/alanerochaa) |
-| **Anna Beatriz Bonfim** | RM559561 | Desenvolvimento do aplicativo mobile (React Native) e integração com IoT | [@annabonfim](https://github.com/annabonfim) |
-| **Maria Eduarda Araujo Penas** | RM560944 | Desenvolvimento da API C# e DevOps  | [@DudaAraujo14](https://github.com/DudaAraujo14) |
+| **Nome**                          | **RM**   | **Função**                  | **GitHub**                                       |
+| --------------------------------- | -------- | --------------------------- | ------------------------------------------------ |
+| **Alane Rocha da Silva**          | RM561052 | Desenvolvedora **Backend ** | [@alanerochaa](https://github.com/alanerochaa)   |
+| **Anna Beatriz de Araujo Bonfim** | RM559561 | Desenvolvedora **Front / Infra** | [@annabonfim](https://github.com/annabonfim)     |
+| **Maria Eduarda Araujo Penas**    | RM560944 | Desenvolvedora **Backend ** | [@DudaAraujo14](https://github.com/DudaAraujo14) |
+
 
 
 <p align="center">
